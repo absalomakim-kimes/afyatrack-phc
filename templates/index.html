@@ -1,0 +1,403 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#087f8c">
+<title>AfyaTrack PHC 4.7</title>
+<style>
+:root{--teal:#087f8c;--dark:#17434a;--bg:#f2f6f8;--line:#dce6e9;--muted:#64777d;--red:#b42318}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:#263c46;font:14px Arial,sans-serif}
+header{background:linear-gradient(115deg,#075e69,#087f8c 62%,#1597a0);color:white;padding:17px 16px;position:sticky;top:0;z-index:5;box-shadow:0 3px 12px #123b4422}
+header h1{margin:0;font-size:21px}header p{margin:5px 0 0;font-size:12px;opacity:.9}
+.layout{display:flex;min-height:calc(100vh - 68px)}nav{width:210px;background:#fff;border-right:1px solid var(--line);padding:12px;flex-shrink:0}
+nav button{display:block;width:100%;text-align:left;border:0;background:transparent;padding:12px;border-radius:8px;color:#31515a;margin:3px 0;font-weight:600}
+nav button.active,nav button:hover{background:#e5f4f4;color:var(--teal);box-shadow:inset 3px 0 var(--teal)}
+main{padding:18px;width:100%;max-width:1200px;margin:auto}.page{display:none}.page.active{display:block}
+h2{margin:0 0 14px;color:var(--dark);font-size:21px}.sub{color:var(--muted);margin:-6px 0 16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:12px;margin-bottom:16px}
+.card,.panel{background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px;box-shadow:0 3px 12px #173b4409}
+.stat small{color:var(--muted)}.stat strong{display:block;font-size:27px;color:var(--teal);margin-top:7px}
+.panel{margin-bottom:15px}.panel h3{margin:0 0 12px;color:var(--dark);font-size:16px}
+.row{display:flex;gap:9px;flex-wrap:wrap;align-items:center}.row>*{flex:1}
+input,select,textarea{width:100%;padding:10px;border:1px solid #cbd9dd;border-radius:7px;background:#fff;color:#263c46;font:inherit;margin:4px 0 10px}
+textarea{min-height:75px;resize:vertical}label{display:block;font-weight:600;font-size:12px;color:#49636a}
+button,.btn{border:0;border-radius:7px;padding:10px 13px;background:var(--teal);color:#fff;font-weight:600;cursor:pointer;font:600 13px Arial}
+button.secondary{background:#e8f0f2;color:#31515a}button.danger{background:#b42318}button.small{padding:7px 9px;font-size:12px;margin:2px}
+.actions{white-space:nowrap}.tablewrap{overflow-x:auto}table{width:100%;border-collapse:collapse;min-width:570px}th,td{text-align:left;padding:10px 8px;border-bottom:1px solid #e8eef0;font-size:13px}th{color:#587078;background:#f7fafb}
+.empty{padding:18px;color:var(--muted);text-align:center}.hidden{display:none!important}.notice{background:#fff8e6;border:1px solid #f1d48a;padding:11px;border-radius:8px;color:#72551a;margin-bottom:14px;font-size:12px}
+.badge{display:inline-block;padding:4px 7px;border-radius:20px;background:#e5f4f4;color:#087f8c;font-size:11px}
+#toast{position:fixed;bottom:15px;left:50%;transform:translateX(-50%);background:#183f46;color:#fff;padding:11px 16px;border-radius:8px;display:none;z-index:20;max-width:90%;text-align:center}
+#appError{display:none;background:#fff0f0;color:#8b1e16;padding:12px;margin:12px;border-radius:8px;white-space:pre-wrap}
+.idcard{max-width:430px;border:2px solid var(--teal);border-radius:12px;padding:18px;margin:10px 0;background:#fff}
+.idcard h3{color:var(--teal);margin:0 0 12px}.idcard p{margin:7px 0}
+@media(max-width:700px){.layout{display:block}nav{width:100%;display:flex;overflow-x:auto;padding:7px;border-right:0;border-bottom:1px solid var(--line)}nav button{white-space:nowrap;width:auto;margin:0 3px;padding:10px}main{padding:12px}header{position:static}.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media print{header,nav,.no-print,.notice{display:none!important}body{background:white}.layout,main{display:block;padding:0;margin:0}.page{display:none!important}#printArea{display:block!important}.idcard{break-inside:avoid}}
+
+.login-gate{position:fixed;inset:0;background:linear-gradient(135deg,#eaf4f5,#f2f6f8);z-index:1000;display:flex;align-items:center;justify-content:center;padding:18px}
+.login-card{width:min(420px,100%);background:#fff;padding:28px;border-radius:16px;border:1px solid #dce6e9;box-shadow:0 15px 45px #17434a18}
+.login-card h2{margin:8px 0;color:#17434a}.login-card p{color:#64777d}.login-card button{width:100%;margin-top:8px}
+.login-mark{width:42px;height:42px;border-radius:12px;background:#087f8c;color:#fff;font-size:30px;display:grid;place-items:center}
+#loginError{color:#b42318;font-size:13px;min-height:18px}
+#sessionBar{display:flex;gap:10px;align-items:center;justify-content:flex-end;padding:8px 14px;background:#e5f4f4;color:#17434a;font-size:12px}
+#sessionBar button{padding:6px 10px}
+body:not(.authenticated) .layout,body:not(.authenticated) header{visibility:hidden}
+
+</style>
+</head>
+<body>
+<header><h1>AfyaTrack PHC <span style="font-size:12px;font-weight:400">v4.8</span></h1><p>Secure multi-unit Primary Healthcare Centre Management</p></header>
+<div id="appError"></div>
+<div id="loginGate" class="login-gate">
+  <div class="login-card">
+    <div class="login-mark">+</div>
+    <h2>AfyaTrack PHC</h2>
+    <p>Secure unit sign-in</p>
+    <form id="loginForm">
+      <label>Username</label><input id="loginUsername" autocomplete="username" required>
+      <label>Password</label><input id="loginPassword" type="password" autocomplete="current-password" required>
+      <button type="submit" id="loginSubmit">Sign in</button>
+      <p id="loginError" role="alert"></p>
+    </form>
+  </div>
+</div>
+<div id="sessionBar" class="hidden"><span id="sessionIdentity"></span><button class="secondary" id="logoutBtn">Sign out</button></div>
+<div class="layout">
+<nav class="no-print" aria-label="Main navigation">
+<button class="active" data-page="dashboard">▦ Dashboard</button>
+<button data-page="patients">♙ Patients</button>
+<button data-page="records">▤ Clinical Records</button>
+<button data-page="laboratory">⚗ Laboratory</button>
+<button data-page="pharmacy">✚ Pharmacy</button>
+<button data-page="appointments">▣ Appointments</button>
+<button data-page="staff">♧ Staff</button>
+<button data-page="backup">⇧ Backup & Restore</button>
+</nav>
+<main>
+<section id="dashboard" class="page active">
+<h2>Dashboard</h2><p class="sub">Overview of your PHC activity</p>
+<div class="grid">
+<div class="card stat"><small>Total patients</small><strong id="statPatients">0</strong></div>
+<div class="card stat"><small>Clinical visits</small><strong id="statRecords">0</strong></div>
+<div class="card stat"><small>Appointments</small><strong id="statAppointments">0</strong></div>
+<div class="card stat"><small>Staff members</small><strong id="statStaff">0</strong></div>
+<div class="card stat"><small>Lab requests</small><strong id="statLab">0</strong></div>
+<div class="card stat"><small>Medicine items</small><strong id="statMedicineCount">0</strong></div>
+</div>
+<div class="grid">
+<div class="card stat"><small>Patients registered this month</small><strong id="statMonthPatients">0</strong></div>
+<div class="card stat"><small>Visits this month</small><strong id="statMonthVisits">0</strong></div>
+<div class="card stat"><small>Upcoming appointments</small><strong id="statUpcoming">0</strong></div>
+</div>
+<div class="panel"><h3>Monthly activity</h3><div id="monthlyActivity"></div></div>
+<div class="panel"><h3>Recent patients</h3><div id="recentPatients"></div></div>
+</section>
+
+<section id="patients" class="page">
+<h2>Patient Management</h2><p class="sub">Register, search, update and print patient ID cards.</p>
+<div class="panel">
+<h3 id="patientFormTitle">Register patient</h3>
+<form id="patientForm">
+<input type="hidden" id="patientEditId">
+<div class="row"><div><label>Full name *</label><input id="pName" required></div><div><label>Age</label><input id="pAge" type="number" min="0" max="120"></div></div>
+<div class="row"><div><label>Gender</label><select id="pGender"><option value="">Select</option><option>Female</option><option>Male</option><option>Other</option></select></div><div><label>Phone</label><input id="pPhone" type="tel"></div></div>
+<div class="row"><div><label>Address</label><input id="pAddress"></div><div><label>Next of kin</label><input id="pKin"></div></div>
+<div class="row"><button type="submit" id="patientSave">Save patient</button><button type="button" class="secondary hidden" id="patientCancel">Cancel edit</button></div>
+</form></div>
+<div class="panel"><div class="row"><h3>Patient directory</h3><input id="patientSearch" placeholder="Search name, ID or phone"></div><div id="patientTable" class="tablewrap"></div></div>
+<div class="panel hidden" id="patientDetail"></div>
+</section>
+
+<section id="records" class="page">
+<h2>Clinical Records</h2><p class="sub">Record a visit and review previous entries.</p>
+<div class="panel"><h3 id="recordFormTitle">Add clinical record</h3>
+<form id="recordForm"><input type="hidden" id="recordEditId">
+<label>Patient *</label><select id="rPatient" required></select>
+<div class="row"><div><label>Visit date *</label><input id="rDate" type="date" required></div><div><label>Visit type</label><select id="rType"><option>General consultation</option><option>Antenatal care</option><option>Immunization</option><option>Family planning</option><option>Child welfare</option><option>Follow-up</option><option>Other</option></select></div></div>
+<label>Symptoms / reason for visit</label><textarea id="rReason"></textarea>
+<label>Clinical notes (non-diagnostic record)</label><textarea id="rNotes"></textarea>
+<label>Follow-up date</label><input id="rFollow" type="date">
+<div class="row"><button type="submit">Save record</button><button type="button" class="secondary hidden" id="recordCancel">Cancel edit</button></div>
+</form></div>
+<div class="panel"><h3>Visit history</h3><input id="recordSearch" placeholder="Search patient or visit type"><div id="recordTable" class="tablewrap"></div></div>
+</section>
+
+
+<section id="laboratory" class="page">
+<h2>Laboratory Management</h2><p class="sub">Create test requests, track progress and record verified results.</p>
+<div class="notice">For demonstration and training only. Laboratory results must be entered and verified by appropriately qualified personnel. This module does not interpret results or replace clinical judgement.</div>
+<div class="panel"><h3 id="labFormTitle">New laboratory request</h3>
+<form id="labForm"><input type="hidden" id="labEditId">
+<label>Patient *</label><select id="lPatient" required></select>
+<div class="row"><div><label>Request date *</label><input id="lDate" type="date" required></div><div><label>Test category</label><select id="lCategory"><option>Haematology</option><option>Clinical chemistry</option><option>Microbiology</option><option>Parasitology</option><option>Serology</option><option>Urinalysis</option><option>Other</option></select></div></div>
+<label>Test requested *</label><input id="lTest" required placeholder="e.g. Full blood count">
+<div class="row"><div><label>Priority</label><select id="lPriority"><option>Routine</option><option>Urgent</option></select></div><div><label>Status</label><select id="lStatus"><option>Requested</option><option>Sample collected</option><option>Processing</option><option>Completed</option><option>Cancelled</option></select></div></div>
+<label>Clinical indication / request notes</label><textarea id="lNotes" placeholder="Brief relevant request information"></textarea>
+<div class="row"><button type="submit">Save laboratory request</button><button type="button" class="secondary hidden" id="labCancel">Cancel edit</button></div>
+</form></div>
+<div class="panel"><h3>Record or update laboratory result</h3>
+<form id="labResultForm">
+<label>Laboratory request *</label><select id="lrRequest" required></select>
+<div class="row"><div><label>Result date</label><input id="lrDate" type="date"></div><div><label>Verification status</label><select id="lrVerified"><option>Pending verification</option><option>Verified</option></select></div></div>
+<label>Result / observation</label><textarea id="lrResult" placeholder="Enter the laboratory result exactly as reported by the laboratory"></textarea>
+<label>Reference range / units (if applicable)</label><input id="lrRange" placeholder="Enter the laboratory's stated range and units, if supplied">
+<label>Performed / verified by</label><input id="lrBy" placeholder="Staff name or identifier">
+<button type="submit">Save result</button>
+</form></div>
+<div class="panel"><h3>Laboratory register</h3>
+<div class="row"><input id="labSearch" placeholder="Search patient, test or request ID"><select id="labFilter"><option value="">All statuses</option><option>Requested</option><option>Sample collected</option><option>Processing</option><option>Completed</option><option>Cancelled</option></select></div>
+<div id="labTable" class="tablewrap"></div>
+</div>
+<div class="panel hidden" id="labDetail"></div>
+</section>
+
+
+<section id="pharmacy" class="page">
+<h2>Pharmacy Management</h2><p class="sub">Manage medicine stock, expiry dates and dispensing records.</p>
+<div class="notice">Demonstration and inventory-training module only. It does not recommend medicines or doses. Dispensing and clinical decisions must be made by qualified healthcare professionals under applicable local rules.</div>
+<div class="grid">
+<div class="card stat"><small>Medicine items</small><strong id="statMedicines">0</strong></div>
+<div class="card stat"><small>Low-stock items</small><strong id="statLowStock">0</strong></div>
+<div class="card stat"><small>Expired items</small><strong id="statExpired">0</strong></div>
+<div class="card stat"><small>Dispensing entries</small><strong id="statDispensed">0</strong></div>
+</div>
+<div class="panel"><h3 id="medicineFormTitle">Add medicine to inventory</h3>
+<form id="medicineForm"><input type="hidden" id="medicineEditId">
+<div class="row"><div><label>Medicine name *</label><input id="mName" required></div><div><label>Form / strength as labelled</label><input id="mStrength" placeholder="e.g. tablet, 500 mg"></div></div>
+<div class="row"><div><label>Batch number</label><input id="mBatch"></div><div><label>Expiry date</label><input id="mExpiry" type="date"></div></div>
+<div class="row"><div><label>Quantity in stock *</label><input id="mQuantity" type="number" min="0" step="1" required></div><div><label>Low-stock threshold</label><input id="mThreshold" type="number" min="0" step="1" value="10"></div></div>
+<div class="row"><div><label>Storage location</label><input id="mLocation" placeholder="e.g. Shelf A"></div><div><label>Supplier (optional)</label><input id="mSupplier"></div></div>
+<div class="row"><button type="submit">Save inventory item</button><button type="button" class="secondary hidden" id="medicineCancel">Cancel edit</button></div>
+</form></div>
+<div class="panel"><h3>Record stock received</h3>
+<form id="stockForm">
+<label>Medicine *</label><select id="stockMedicine" required></select>
+<div class="row"><div><label>Quantity received *</label><input id="stockQuantity" type="number" min="1" step="1" required></div><div><label>Date received</label><input id="stockDate" type="date"></div></div>
+<label>Reference / note</label><input id="stockNote">
+<button type="submit">Add stock</button>
+</form></div>
+<div class="panel"><h3>Record dispensing</h3>
+<form id="dispenseForm">
+<label>Medicine *</label><select id="dispenseMedicine" required></select>
+<div class="row"><div><label>Quantity dispensed *</label><input id="dispenseQuantity" type="number" min="1" step="1" required></div><div><label>Date</label><input id="dispenseDate" type="date"></div></div>
+<label>Patient (optional for demo)</label><select id="dispensePatient"></select>
+<label>Prescription / authorized reference</label><input id="dispenseReference" placeholder="Reference only — do not enter treatment advice">
+<label>Recorded by</label><input id="dispenseBy">
+<button type="submit">Save dispensing entry</button>
+</form></div>
+<div class="panel"><h3>Medicine inventory</h3>
+<div class="row"><input id="medicineSearch" placeholder="Search medicine, batch or location"><select id="medicineFilter"><option value="">All stock levels</option><option value="low">Low stock</option><option value="expired">Expired</option><option value="expiring">Expiring within 90 days</option></select></div>
+<div id="medicineTable" class="tablewrap"></div>
+</div>
+<div class="panel"><h3>Recent stock and dispensing activity</h3><div id="pharmacyActivity" class="tablewrap"></div></div>
+</section>
+
+<section id="appointments" class="page">
+<h2>Appointments</h2><p class="sub">Schedule and track patient appointments.</p>
+<div class="panel"><h3 id="appointmentFormTitle">Schedule appointment</h3>
+<form id="appointmentForm"><input type="hidden" id="appointmentEditId">
+<label>Patient *</label><select id="aPatient" required></select>
+<div class="row"><div><label>Date *</label><input id="aDate" type="date" required></div><div><label>Time</label><input id="aTime" type="time"></div></div>
+<label>Purpose</label><input id="aPurpose">
+<label>Status</label><select id="aStatus"><option>Scheduled</option><option>Completed</option><option>Cancelled</option></select>
+<div class="row"><button type="submit">Save appointment</button><button type="button" class="secondary hidden" id="appointmentCancel">Cancel edit</button></div>
+</form></div>
+<div class="panel"><h3>Appointment list</h3><div class="row"><input id="appointmentSearch" placeholder="Search patient or purpose"><select id="appointmentFilter"><option value="">All statuses</option><option>Scheduled</option><option>Completed</option><option>Cancelled</option></select></div><div id="appointmentTable" class="tablewrap"></div></div>
+</section>
+
+<section id="staff" class="page">
+<h2>Staff Management</h2><p class="sub">Maintain a simple staff directory.</p>
+<div class="panel"><h3 id="staffFormTitle">Add staff member</h3><form id="staffForm"><input type="hidden" id="staffEditId">
+<div class="row"><div><label>Full name *</label><input id="sName" required></div><div><label>Role / designation</label><input id="sRole"></div></div>
+<div class="row"><div><label>Phone</label><input id="sPhone"></div><div><label>Department</label><input id="sDepartment"></div></div>
+<div class="row"><button type="submit">Save staff</button><button type="button" class="secondary hidden" id="staffCancel">Cancel edit</button></div>
+</form></div>
+<div class="panel"><h3>Staff directory</h3><div id="staffTable" class="tablewrap"></div></div>
+</section>
+
+<section id="backup" class="page">
+<h2>Backup & Restore</h2><p class="sub">Save a copy of your records or restore a previous backup.</p>
+<div class="notice">This demo stores data only in this browser on this device. Export backups regularly. Do not enter real patient-identifying or confidential medical information. This prototype has no login, encryption, server, or clinical decision support.</div>
+<div class="panel"><h3>Export backup</h3><p>Download all AfyaTrack demo data as a JSON file.</p><button id="exportBtn">Download backup</button></div>
+<div class="panel"><h3>Restore backup</h3><p>Choose a backup JSON file. Restoring replaces the current AfyaTrack data.</p><input type="file" id="restoreFile" accept=".json,application/json"><button id="restoreBtn">Restore selected backup</button></div>
+<div class="panel"><h3>Local data</h3><p id="storageInfo"></p><button class="danger" id="clearBtn">Clear all local demo data</button></div>
+</section>
+<div id="printArea" class="hidden"></div>
+</main></div><div id="toast"></div>
+<script>
+'use strict';
+const KEYS={patients:'afya_patients',records:'afya_records',appointments:'afya_appointments',staff:'afya_staff',lab:'afya_lab_requests',medicines:'afya_medicines',pharmacyLog:'afya_pharmacy_log'};
+const $=id=>document.getElementById(id);
+const load=k=>{try{return JSON.parse(localStorage.getItem(k)||'[]')}catch(e){return []}};
+let patients=load(KEYS.patients),records=load(KEYS.records),appointments=load(KEYS.appointments),staff=load(KEYS.staff),labRequests=load(KEYS.lab),medicines=load(KEYS.medicines),pharmacyLog=load(KEYS.pharmacyLog);
+let syncTimer=null, serverReady=false, syncInProgress=false;
+const currentData=()=>({patients,records,appointments,staff,labRequests,medicines,pharmacyLog});
+const cacheData=()=>{localStorage.setItem(KEYS.patients,JSON.stringify(patients));localStorage.setItem(KEYS.records,JSON.stringify(records));localStorage.setItem(KEYS.appointments,JSON.stringify(appointments));localStorage.setItem(KEYS.staff,JSON.stringify(staff));localStorage.setItem(KEYS.lab,JSON.stringify(labRequests));localStorage.setItem(KEYS.medicines,JSON.stringify(medicines));localStorage.setItem(KEYS.pharmacyLog,JSON.stringify(pharmacyLog));};
+const save=()=>{cacheData(); if(serverReady){clearTimeout(syncTimer);syncTimer=setTimeout(syncToServer,450);}};
+async function api(path,options={}){const response=await fetch(path,{credentials:'same-origin',headers:{'Content-Type':'application/json',...(options.headers||{})},...options});let data={};try{data=await response.json()}catch(e){}if(!response.ok)throw new Error(data.error||'Server request failed');return data;}
+async function syncToServer(){if(!serverReady||syncInProgress)return;syncInProgress=true;try{await api('/api/data',{method:'PUT',body:JSON.stringify(currentData())});$('sessionIdentity').textContent=$('sessionIdentity').textContent.replace(' • Sync pending','');}catch(e){$('sessionIdentity').textContent=$('sessionIdentity').textContent.replace(' • Sync pending','')+' • Sync pending';toast('Could not sync to server: '+e.message);}finally{syncInProgress=false;}}
+async function loadFromServer(){const d=await api('/api/data');patients=d.patients||[];records=d.records||[];appointments=d.appointments||[];staff=d.staff||[];labRequests=d.labRequests||[];medicines=d.medicines||[];pharmacyLog=d.pharmacyLog||[];cacheData();}
+async function startSession(user){$('loginGate').classList.add('hidden');$('sessionBar').classList.remove('hidden');document.body.classList.add('authenticated');$('sessionIdentity').textContent=(user.unit_name||'Platform administration')+' • '+user.username+' • '+user.role;await loadFromServer();serverReady=true;checkSession().catch(e=>{$('loginError').textContent='Cannot reach server. Check your connection and try again.';});}
+async function checkSession(){try{const d=await api('/api/me');await startSession(d.user);}catch(e){$('loginGate').classList.remove('hidden');}}
+$('loginForm').addEventListener('submit',async e=>{e.preventDefault();$('loginSubmit').disabled=true;$('loginError').textContent='';try{const d=await api('/login',{method:'POST',body:JSON.stringify({username:$('loginUsername').value.trim(),password:$('loginPassword').value})});await startSession(d.user);}catch(err){$('loginError').textContent=err.message;}finally{$('loginSubmit').disabled=false;}});
+$('logoutBtn').addEventListener('click',async()=>{try{await api('/logout',{method:'POST',body:'{}'});}catch(e){}serverReady=false;document.body.classList.remove('authenticated');$('sessionBar').classList.add('hidden');$('loginGate').classList.remove('hidden');});
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const today=()=>new Date().toISOString().slice(0,10);
+const month=()=>today().slice(0,7);
+const patient=id=>patients.find(p=>p.id===id);
+const pname=id=>patient(id)?.name||'Unknown patient';
+function toast(msg){$('toast').textContent=msg;$('toast').style.display='block';setTimeout(()=>$('toast').style.display='none',2400)}
+function showPage(name){document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id===name));document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('active',b.dataset.page===name));if(name==='dashboard')renderDashboard()}
+document.querySelectorAll('nav button').forEach(b=>b.addEventListener('click',()=>showPage(b.dataset.page)));
+function table(rows,headers){if(!rows.length)return '<div class="empty">No data available yet.</div>';return '<table><thead><tr>'+headers.map(h=>'<th>'+h+'</th>').join('')+'</tr></thead><tbody>'+rows.join('')+'</tbody></table>'}
+function refreshPatientOptions(){let opts='<option value="">Select patient</option>'+patients.slice().sort((a,b)=>a.name.localeCompare(b.name)).map(p=>`<option value="${esc(p.id)}">${esc(p.name)} — ${esc(p.patientNo||'')}</option>`).join('');$('rPatient').innerHTML=opts;$('aPatient').innerHTML=opts;$('lPatient').innerHTML=opts}
+function renderPatients(){
+ const q=$('patientSearch').value.toLowerCase();
+ const list=patients.filter(p=>(p.name+' '+p.patientNo+' '+p.phone).toLowerCase().includes(q));
+ $('patientTable').innerHTML=table(list.map(p=>`<tr><td><b>${esc(p.name)}</b><br><small>${esc(p.patientNo||'')}</small></td><td>${esc(p.age||'—')}</td><td>${esc(p.gender||'—')}</td><td>${esc(p.phone||'—')}</td><td class="actions"><button class="small" onclick="viewPatient('${p.id}')">View</button><button class="small secondary" onclick="editPatient('${p.id}')">Edit</button><button class="small secondary" onclick="printCard('${p.id}')">ID card</button><button class="small danger" onclick="deletePatient('${p.id}')">Delete</button></td></tr>`),['Patient','Age','Gender','Phone','Actions']);
+ refreshPatientOptions();
+}
+function renderRecords(){let q=$('recordSearch').value.toLowerCase();let list=records.filter(r=>(pname(r.patientId)+' '+r.type+' '+r.reason).toLowerCase().includes(q)).sort((a,b)=>(b.date||'').localeCompare(a.date||''));$('recordTable').innerHTML=table(list.map(r=>`<tr><td>${esc(r.date||'')}</td><td>${esc(pname(r.patientId))}</td><td>${esc(r.type||'')}</td><td>${esc(r.reason||'—')}</td><td class="actions"><button class="small secondary" onclick="editRecord('${r.id}')">Edit</button><button class="small danger" onclick="deleteRecord('${r.id}')">Delete</button></td></tr>`),['Date','Patient','Visit type','Reason','Actions']);}
+function renderAppointments(){let q=$('appointmentSearch').value.toLowerCase(),f=$('appointmentFilter').value;let list=appointments.filter(a=>(pname(a.patientId)+' '+a.purpose).toLowerCase().includes(q)&&(!f||a.status===f)).sort((a,b)=>(a.date||'').localeCompare(b.date||''));$('appointmentTable').innerHTML=table(list.map(a=>`<tr><td>${esc(a.date||'')} ${esc(a.time||'')}</td><td>${esc(pname(a.patientId))}</td><td>${esc(a.purpose||'—')}</td><td><span class="badge">${esc(a.status||'Scheduled')}</span></td><td class="actions"><button class="small secondary" onclick="editAppointment('${a.id}')">Edit</button><button class="small danger" onclick="deleteAppointment('${a.id}')">Delete</button></td></tr>`),['Date / time','Patient','Purpose','Status','Actions']);}
+
+function renderLab(){
+ const q=$('labSearch').value.toLowerCase(),f=$('labFilter').value;
+ const list=labRequests.filter(x=>(pname(x.patientId)+' '+x.test+' '+x.requestNo).toLowerCase().includes(q)&&(!f||x.status===f)).sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+ $('labTable').innerHTML=table(list.map(x=>`<tr><td>${esc(x.requestNo||'')}</td><td>${esc(x.date||'')}</td><td>${esc(pname(x.patientId))}</td><td>${esc(x.test||'')}</td><td>${esc(x.category||'')}</td><td><span class="badge">${esc(x.status||'Requested')}</span></td><td class="actions"><button class="small" onclick="viewLab('${x.id}')">View</button><button class="small secondary" onclick="editLab('${x.id}')">Edit</button><button class="small danger" onclick="deleteLab('${x.id}')">Delete</button></td></tr>`),['Request ID','Date','Patient','Test','Category','Status','Actions']);
+ const options='<option value="">Select request</option>'+labRequests.filter(x=>x.status!=='Cancelled').map(x=>`<option value="${esc(x.id)}">${esc(x.requestNo||'')} — ${esc(pname(x.patientId))} — ${esc(x.test||'')}</option>`).join('');
+ $('lrRequest').innerHTML=options;
+}
+function viewLab(id){
+ const x=labRequests.find(v=>v.id===id);if(!x)return;
+ $('labDetail').innerHTML=`<h3>Laboratory request ${esc(x.requestNo||'')}</h3><p><b>Patient:</b> ${esc(pname(x.patientId))}</p><p><b>Test:</b> ${esc(x.test||'')} (${esc(x.category||'')})</p><p><b>Date / priority:</b> ${esc(x.date||'')} / ${esc(x.priority||'Routine')}</p><p><b>Status:</b> ${esc(x.status||'Requested')}</p><p><b>Request notes:</b> ${esc(x.notes||'—')}</p><hr><h3>Result</h3><p><b>Result date:</b> ${esc(x.resultDate||'—')}</p><p><b>Verification:</b> ${esc(x.verified||'Pending verification')}</p><p><b>Result / observation:</b><br>${esc(x.result||'Not entered')}</p><p><b>Reference range / units:</b> ${esc(x.range||'—')}</p><p><b>Performed / verified by:</b> ${esc(x.performedBy||'—')}</p><button class="small secondary" onclick="selectLabResult('${x.id}')">Update result</button>`;
+ $('labDetail').classList.remove('hidden');
+}
+function editLab(id){
+ const x=labRequests.find(v=>v.id===id);if(!x)return;
+ $('labEditId').value=id;$('lPatient').value=x.patientId;$('lDate').value=x.date||'';$('lCategory').value=x.category||'Haematology';$('lTest').value=x.test||'';$('lPriority').value=x.priority||'Routine';$('lStatus').value=x.status||'Requested';$('lNotes').value=x.notes||'';
+ $('labFormTitle').textContent='Edit laboratory request';$('labCancel').classList.remove('hidden');showPage('laboratory');window.scrollTo(0,0);
+}
+function deleteLab(id){if(!confirm('Delete this laboratory request and its result?'))return;labRequests=labRequests.filter(x=>x.id!==id);save();renderAll();$('labDetail').classList.add('hidden');toast('Laboratory request deleted')}
+function selectLabResult(id){$('lrRequest').value=id;let x=labRequests.find(v=>v.id===id);if(x){$('lrDate').value=x.resultDate||today();$('lrVerified').value=x.verified||'Pending verification';$('lrResult').value=x.result||'';$('lrRange').value=x.range||'';$('lrBy').value=x.performedBy||'';}document.getElementById('lrResult').scrollIntoView({behavior:'smooth',block:'center'});}
+$('labForm').addEventListener('submit',e=>{
+ e.preventDefault();let id=$('labEditId').value;
+ let data={patientId:$('lPatient').value,date:$('lDate').value,category:$('lCategory').value,test:$('lTest').value.trim(),priority:$('lPriority').value,status:$('lStatus').value,notes:$('lNotes').value.trim()};
+ if(!data.patientId||!data.test)return;
+ if(id){Object.assign(labRequests.find(x=>x.id===id),data);toast('Laboratory request updated')}
+ else{labRequests.push({id:uid(),requestNo:'LAB-'+Date.now().toString().slice(-6),...data,createdAt:today(),result:'',verified:'Pending verification'});toast('Laboratory request created')}
+ save();$('labForm').reset();$('labEditId').value='';$('labFormTitle').textContent='New laboratory request';$('labCancel').classList.add('hidden');$('lDate').value=today();renderAll();
+});
+$('labCancel').onclick=()=>{$('labForm').reset();$('labEditId').value='';$('labFormTitle').textContent='New laboratory request';$('labCancel').classList.add('hidden');$('lDate').value=today()};
+$('labResultForm').addEventListener('submit',e=>{
+ e.preventDefault();let x=labRequests.find(v=>v.id===$('lrRequest').value);if(!x){toast('Select a laboratory request');return}
+ x.resultDate=$('lrDate').value||today();x.verified=$('lrVerified').value;x.result=$('lrResult').value.trim();x.range=$('lrRange').value.trim();x.performedBy=$('lrBy').value.trim();
+ if(x.verified==='Verified'&&x.status!=='Cancelled')x.status='Completed';
+ save();renderAll();viewLab(x.id);toast('Laboratory result saved');
+});
+$('labSearch').addEventListener('input',renderLab);$('labFilter').addEventListener('change',renderLab);
+
+
+function medicineById(id){return medicines.find(m=>m.id===id)}
+function expiryState(m){
+ if(!m.expiry)return 'No expiry date';
+ const now=today(),limit=new Date();limit.setDate(limit.getDate()+90);
+ const lim=limit.toISOString().slice(0,10);
+ if(m.expiry<now)return 'Expired';
+ if(m.expiry<=lim)return 'Expiring soon';
+ return 'In date';
+}
+function renderPharmacy(){
+ const q=$('medicineSearch').value.toLowerCase(),f=$('medicineFilter').value;
+ const filtered=medicines.filter(m=>{
+  const match=(m.name+' '+m.strength+' '+m.batch+' '+m.location).toLowerCase().includes(q);
+  const state=expiryState(m);
+  const status=f==='low'?Number(m.quantity)<=Number(m.threshold||0):f==='expired'?state==='Expired':f==='expiring'?state==='Expiring soon':true;
+  return match&&status;
+ }).sort((a,b)=>a.name.localeCompare(b.name));
+ $('medicineTable').innerHTML=table(filtered.map(m=>{
+  const state=expiryState(m),low=Number(m.quantity)<=Number(m.threshold||0);
+  const label=state==='Expired'?'Expired':state==='Expiring soon'?'Expiring soon':low?'Low stock':'In stock';
+  return `<tr><td><b>${esc(m.name)}</b><br><small>${esc(m.strength||'')}</small></td><td>${esc(m.batch||'—')}</td><td>${esc(m.quantity)}</td><td>${esc(m.threshold||0)}</td><td>${esc(m.expiry||'—')}</td><td><span class="badge">${label}</span></td><td class="actions"><button class="small secondary" onclick="editMedicine('${m.id}')">Edit</button><button class="small danger" onclick="deleteMedicine('${m.id}')">Delete</button></td></tr>`;
+ }),['Medicine','Batch','Quantity','Alert at','Expiry','Stock status','Actions']);
+ const opts='<option value="">Select medicine</option>'+medicines.map(m=>`<option value="${esc(m.id)}">${esc(m.name)} ${esc(m.strength||'')} — stock: ${esc(m.quantity)}</option>`).join('');
+ $('stockMedicine').innerHTML=opts;$('dispenseMedicine').innerHTML=opts;
+ $('dispensePatient').innerHTML='<option value="">Not specified</option>'+patients.map(p=>`<option value="${esc(p.id)}">${esc(p.name)} — ${esc(p.patientNo||'')}</option>`).join('');
+ $('statMedicines').textContent=medicines.length;
+ $('statLowStock').textContent=medicines.filter(m=>Number(m.quantity)<=Number(m.threshold||0)).length;
+ $('statExpired').textContent=medicines.filter(m=>expiryState(m)==='Expired').length;
+ $('statDispensed').textContent=pharmacyLog.filter(x=>x.type==='Dispensed').length;
+ const logs=pharmacyLog.slice().sort((a,b)=>(b.date||'').localeCompare(a.date||'')).slice(0,20);
+ $('pharmacyActivity').innerHTML=table(logs.map(x=>`<tr><td>${esc(x.date||'')}</td><td>${esc(x.type)}</td><td>${esc(medicineById(x.medicineId)?.name||x.medicineName||'Medicine removed')}</td><td>${esc(x.quantity)}</td><td>${esc(x.patientName||'—')}</td><td>${esc(x.note||'—')}</td></tr>`),['Date','Activity','Medicine','Quantity','Patient','Note']);
+}
+$('medicineForm').addEventListener('submit',e=>{
+ e.preventDefault();const id=$('medicineEditId').value;
+ const data={name:$('mName').value.trim(),strength:$('mStrength').value.trim(),batch:$('mBatch').value.trim(),expiry:$('mExpiry').value,quantity:Number($('mQuantity').value),threshold:Number($('mThreshold').value||0),location:$('mLocation').value.trim(),supplier:$('mSupplier').value.trim()};
+ if(!data.name||!Number.isInteger(data.quantity)||data.quantity<0){toast('Enter a valid medicine name and stock quantity');return}
+ if(id){const old=medicineById(id);if(old){data.quantity=old.quantity;Object.assign(old,data)}toast('Medicine details updated')}
+ else{medicines.push({id:uid(),...data,createdAt:today()});toast('Medicine added to inventory')}
+ save();$('medicineForm').reset();$('mThreshold').value=10;$('medicineEditId').value='';$('medicineFormTitle').textContent='Add medicine to inventory';$('medicineCancel').classList.add('hidden');renderAll();
+});
+function editMedicine(id){
+ const m=medicineById(id);if(!m)return;
+ $('medicineEditId').value=id;$('mName').value=m.name;$('mStrength').value=m.strength||'';$('mBatch').value=m.batch||'';$('mExpiry').value=m.expiry||'';$('mQuantity').value=m.quantity;$('mThreshold').value=m.threshold||0;$('mLocation').value=m.location||'';$('mSupplier').value=m.supplier||'';
+ $('medicineFormTitle').textContent='Edit medicine details';$('medicineCancel').classList.remove('hidden');showPage('pharmacy');window.scrollTo(0,0);
+}
+$('medicineCancel').onclick=()=>{$('medicineForm').reset();$('mThreshold').value=10;$('medicineEditId').value='';$('medicineFormTitle').textContent='Add medicine to inventory';$('medicineCancel').classList.add('hidden')};
+function deleteMedicine(id){
+ const m=medicineById(id);if(!m)return;
+ if(!confirm('Remove this medicine item from inventory? Past activity entries will remain in the log.'))return;
+ medicines=medicines.filter(x=>x.id!==id);save();renderAll();toast('Inventory item removed');
+}
+$('stockForm').addEventListener('submit',e=>{
+ e.preventDefault();const m=medicineById($('stockMedicine').value),qty=Number($('stockQuantity').value);
+ if(!m||!Number.isInteger(qty)||qty<1){toast('Select a medicine and enter a valid quantity');return}
+ m.quantity=Number(m.quantity)+qty;
+ pharmacyLog.push({id:uid(),type:'Stock received',medicineId:m.id,medicineName:m.name,quantity:qty,date:$('stockDate').value||today(),note:$('stockNote').value.trim()});
+ save();$('stockForm').reset();$('stockDate').value=today();renderAll();toast('Stock quantity updated');
+});
+$('dispenseForm').addEventListener('submit',e=>{
+ e.preventDefault();const m=medicineById($('dispenseMedicine').value),qty=Number($('dispenseQuantity').value);
+ if(!m||!Number.isInteger(qty)||qty<1){toast('Select a medicine and enter a valid quantity');return}
+ if(qty>Number(m.quantity)){toast('Not enough stock available');return}
+ if(!confirm('Confirm that this dispensing entry is authorized and accurately recorded?'))return;
+ m.quantity=Number(m.quantity)-qty;
+ const pid=$('dispensePatient').value;
+ pharmacyLog.push({id:uid(),type:'Dispensed',medicineId:m.id,medicineName:m.name,quantity:qty,date:$('dispenseDate').value||today(),patientName:pid?pname(pid):'',note:[$('dispenseReference').value.trim(),$('dispenseBy').value.trim()].filter(Boolean).join(' | ')});
+ save();$('dispenseForm').reset();$('dispenseDate').value=today();renderAll();toast('Dispensing entry saved and stock reduced');
+});
+$('medicineSearch').addEventListener('input',renderPharmacy);$('medicineFilter').addEventListener('change',renderPharmacy);
+
+function renderStaff(){$('staffTable').innerHTML=table(staff.map(s=>`<tr><td>${esc(s.name)}</td><td>${esc(s.role||'—')}</td><td>${esc(s.department||'—')}</td><td>${esc(s.phone||'—')}</td><td class="actions"><button class="small secondary" onclick="editStaff('${s.id}')">Edit</button><button class="small danger" onclick="deleteStaff('${s.id}')">Delete</button></td></tr>`),['Name','Role','Department','Phone','Actions']);}
+function renderDashboard(){let m=month();$('statPatients').textContent=patients.length;$('statRecords').textContent=records.length;$('statAppointments').textContent=appointments.length;$('statStaff').textContent=staff.length;$('statLab').textContent=labRequests.length;$('statMedicineCount').textContent=medicines.length;$('statMonthPatients').textContent=patients.filter(p=>(p.createdAt||'').slice(0,7)===m).length;$('statMonthVisits').textContent=records.filter(r=>(r.date||'').slice(0,7)===m).length;$('statUpcoming').textContent=appointments.filter(a=>a.status==='Scheduled'&&a.date>=today()).length;
+ let months=[];for(let i=5;i>=0;i--){let d=new Date();d.setDate(1);d.setMonth(d.getMonth()-i);let key=d.toISOString().slice(0,7);months.push({key,label:d.toLocaleString(undefined,{month:'short'}),count:records.filter(r=>(r.date||'').slice(0,7)===key).length})}
+ let max=Math.max(1,...months.map(x=>x.count));$('monthlyActivity').innerHTML=months.map(x=>`<div style="display:flex;align-items:center;gap:9px;margin:9px 0"><span style="width:40px">${x.label}</span><div style="background:#e8f0f2;border-radius:20px;flex:1;height:13px;overflow:hidden"><div style="height:13px;background:#087f8c;width:${x.count/max*100}%"></div></div><b>${x.count}</b></div>`).join('');
+ let recent=patients.slice().sort((a,b)=>(b.createdAt||'').localeCompare(a.createdAt||'')).slice(0,5);$('recentPatients').innerHTML=recent.length?table(recent.map(p=>`<tr><td>${esc(p.name)}</td><td>${esc(p.patientNo||'')}</td><td>${esc(p.createdAt||'')}</td></tr>`),['Name','Patient ID','Registered']):'<div class="empty">No patients registered yet.</div>';
+}
+$('patientForm').addEventListener('submit',e=>{e.preventDefault();let id=$('patientEditId').value;let data={name:$('pName').value.trim(),age:$('pAge').value,gender:$('pGender').value,phone:$('pPhone').value.trim(),address:$('pAddress').value.trim(),kin:$('pKin').value.trim()};if(!data.name)return; if(id){Object.assign(patient(id),data);toast('Patient updated')}else{patients.push({id:uid(),...data,patientNo:'AFY-'+Date.now().toString().slice(-6),createdAt:today()});toast('Patient registered')}save();$('patientForm').reset();$('patientEditId').value='';$('patientFormTitle').textContent='Register patient';$('patientCancel').classList.add('hidden');renderAll()});
+function editPatient(id){let p=patient(id);if(!p)return;$('patientEditId').value=id;$('pName').value=p.name;$('pAge').value=p.age||'';$('pGender').value=p.gender||'';$('pPhone').value=p.phone||'';$('pAddress').value=p.address||'';$('pKin').value=p.kin||'';$('patientFormTitle').textContent='Edit patient';$('patientCancel').classList.remove('hidden');showPage('patients');window.scrollTo(0,0)}
+$('patientCancel').onclick=()=>{$('patientForm').reset();$('patientEditId').value='';$('patientFormTitle').textContent='Register patient';$('patientCancel').classList.add('hidden')};
+function deletePatient(id){if(!confirm('Delete this patient and all linked records and appointments?'))return;patients=patients.filter(p=>p.id!==id);records=records.filter(r=>r.patientId!==id);appointments=appointments.filter(a=>a.patientId!==id);save();renderAll();$('patientDetail').classList.add('hidden');toast('Patient deleted')}
+function viewPatient(id){let p=patient(id);if(!p)return;let pr=records.filter(r=>r.patientId===id);$('patientDetail').innerHTML=`<h3>Patient profile: ${esc(p.name)}</h3><p><b>ID:</b> ${esc(p.patientNo||'')}</p><p><b>Age / Gender:</b> ${esc(p.age||'—')} / ${esc(p.gender||'—')}</p><p><b>Phone:</b> ${esc(p.phone||'—')}</p><p><b>Address:</b> ${esc(p.address||'—')}</p><p><b>Next of kin:</b> ${esc(p.kin||'—')}</p><p><b>Clinical visits:</b> ${pr.length}</p><button class="small secondary" onclick="printCard('${id}')">Print ID card</button>`;$('patientDetail').classList.remove('hidden')}
+function printCard(id){let p=patient(id);if(!p)return;$('printArea').innerHTML=`<div class="idcard"><h3>AfyaTrack PHC — Patient ID</h3><p><b>Patient:</b> ${esc(p.name)}</p><p><b>Patient ID:</b> ${esc(p.patientNo||'')}</p><p><b>Age:</b> ${esc(p.age||'—')}</p><p><b>Gender:</b> ${esc(p.gender||'—')}</p><p><b>Phone:</b> ${esc(p.phone||'—')}</p><p><b>Registered:</b> ${esc(p.createdAt||'')}</p><hr><small>For demonstration only — not an official identification document.</small></div>`;$('printArea').classList.remove('hidden');window.print();$('printArea').classList.add('hidden')}
+$('recordForm').addEventListener('submit',e=>{e.preventDefault();let id=$('recordEditId').value;let data={patientId:$('rPatient').value,date:$('rDate').value,type:$('rType').value,reason:$('rReason').value.trim(),notes:$('rNotes').value.trim(),follow:$('rFollow').value};if(!data.patientId)return;if(id){Object.assign(records.find(r=>r.id===id),data);toast('Clinical record updated')}else{records.push({id:uid(),...data,createdAt:today()});toast('Clinical record saved')}save();$('recordForm').reset();$('recordEditId').value='';$('recordFormTitle').textContent='Add clinical record';$('recordCancel').classList.add('hidden');renderAll()});
+function editRecord(id){let r=records.find(x=>x.id===id);if(!r)return;$('recordEditId').value=id;$('rPatient').value=r.patientId;$('rDate').value=r.date||'';$('rType').value=r.type||'General consultation';$('rReason').value=r.reason||'';$('rNotes').value=r.notes||'';$('rFollow').value=r.follow||'';$('recordFormTitle').textContent='Edit clinical record';$('recordCancel').classList.remove('hidden');showPage('records');window.scrollTo(0,0)}
+$('recordCancel').onclick=()=>{$('recordForm').reset();$('recordEditId').value='';$('recordFormTitle').textContent='Add clinical record';$('recordCancel').classList.add('hidden')};
+function deleteRecord(id){if(!confirm('Delete this clinical record?'))return;records=records.filter(r=>r.id!==id);save();renderAll();toast('Record deleted')}
+$('appointmentForm').addEventListener('submit',e=>{e.preventDefault();let id=$('appointmentEditId').value;let data={patientId:$('aPatient').value,date:$('aDate').value,time:$('aTime').value,purpose:$('aPurpose').value.trim(),status:$('aStatus').value};if(!data.patientId)return;if(id){Object.assign(appointments.find(a=>a.id===id),data);toast('Appointment updated')}else{appointments.push({id:uid(),...data});toast('Appointment scheduled')}save();$('appointmentForm').reset();$('appointmentEditId').value='';$('appointmentFormTitle').textContent='Schedule appointment';$('appointmentCancel').classList.add('hidden');renderAll()});
+function editAppointment(id){let a=appointments.find(x=>x.id===id);if(!a)return;$('appointmentEditId').value=id;$('aPatient').value=a.patientId;$('aDate').value=a.date||'';$('aTime').value=a.time||'';$('aPurpose').value=a.purpose||'';$('aStatus').value=a.status||'Scheduled';$('appointmentFormTitle').textContent='Edit appointment';$('appointmentCancel').classList.remove('hidden');showPage('appointments');window.scrollTo(0,0)}
+$('appointmentCancel').onclick=()=>{$('appointmentForm').reset();$('appointmentEditId').value='';$('appointmentFormTitle').textContent='Schedule appointment';$('appointmentCancel').classList.add('hidden')};
+function deleteAppointment(id){if(!confirm('Delete this appointment?'))return;appointments=appointments.filter(a=>a.id!==id);save();renderAll();toast('Appointment deleted')}
+$('staffForm').addEventListener('submit',e=>{e.preventDefault();let id=$('staffEditId').value;let data={name:$('sName').value.trim(),role:$('sRole').value.trim(),phone:$('sPhone').value.trim(),department:$('sDepartment').value.trim()};if(id){Object.assign(staff.find(s=>s.id===id),data);toast('Staff updated')}else{staff.push({id:uid(),...data});toast('Staff member added')}save();$('staffForm').reset();$('staffEditId').value='';$('staffFormTitle').textContent='Add staff member';$('staffCancel').classList.add('hidden');renderAll()});
+function editStaff(id){let s=staff.find(x=>x.id===id);if(!s)return;$('staffEditId').value=id;$('sName').value=s.name;$('sRole').value=s.role||'';$('sPhone').value=s.phone||'';$('sDepartment').value=s.department||'';$('staffFormTitle').textContent='Edit staff member';$('staffCancel').classList.remove('hidden');showPage('staff');window.scrollTo(0,0)}
+$('staffCancel').onclick=()=>{$('staffForm').reset();$('staffEditId').value='';$('staffFormTitle').textContent='Add staff member';$('staffCancel').classList.add('hidden')};
+function deleteStaff(id){if(!confirm('Delete this staff member?'))return;staff=staff.filter(s=>s.id!==id);save();renderAll();toast('Staff member deleted')}
+$('patientSearch').addEventListener('input',renderPatients);$('recordSearch').addEventListener('input',renderRecords);$('appointmentSearch').addEventListener('input',renderAppointments);$('appointmentFilter').addEventListener('change',renderAppointments);
+function renderAll(){renderPatients();renderRecords();renderAppointments();renderLab();renderPharmacy();renderStaff();renderDashboard();$('storageInfo').textContent=`${patients.length} patients, ${records.length} clinical records, ${appointments.length} appointments, ${staff.length} staff members, ${labRequests.length} laboratory requests, ${medicines.length} medicine items and ${pharmacyLog.length} pharmacy activity entries stored on this device.`}
+$('exportBtn').onclick=()=>{let data={app:'AfyaTrack PHC',version:'4.5',exportedAt:new Date().toISOString(),patients,records,appointments,staff,labRequests,medicines,pharmacyLog};let blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});let a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='afyatrack-backup-'+today()+'.json';a.click();URL.revokeObjectURL(a.href);toast('Backup downloaded')};
+$('restoreBtn').onclick=()=>{let f=$('restoreFile').files[0];if(!f){toast('Choose a backup file first');return}let reader=new FileReader();reader.onload=()=>{try{let d=JSON.parse(reader.result);if(!d||!Array.isArray(d.patients)||!Array.isArray(d.records)||!Array.isArray(d.appointments)||!Array.isArray(d.staff)||(d.labRequests!==undefined&&!Array.isArray(d.labRequests))||(d.medicines!==undefined&&!Array.isArray(d.medicines))||(d.pharmacyLog!==undefined&&!Array.isArray(d.pharmacyLog)))throw new Error('Backup format is not valid');if(!confirm('This will replace all current AfyaTrack data. Continue?'))return;patients=d.patients;records=d.records;appointments=d.appointments;staff=d.staff;labRequests=Array.isArray(d.labRequests)?d.labRequests:[];medicines=Array.isArray(d.medicines)?d.medicines:[];pharmacyLog=Array.isArray(d.pharmacyLog)?d.pharmacyLog:[];save();renderAll();toast('Backup restored successfully')}catch(err){alert('Could not restore backup: '+err.message)}};reader.readAsText(f)};
+$('clearBtn').onclick=()=>{if(!confirm('Permanently clear all AfyaTrack data stored in this browser? Export a backup first if needed.'))return;patients=[];records=[];appointments=[];staff=[];labRequests=[];medicines=[];pharmacyLog=[];save();renderAll();toast('Local demo data cleared')};
+window.addEventListener('error',e=>{$('appError').style.display='block';$('appError').textContent='An app error occurred: '+e.message});
+renderAll();$('rDate').value=today();$('lDate').value=today();$('lrDate').value=today();$('stockDate').value=today();$('dispenseDate').value=today();
+</script>
+</body></html>
